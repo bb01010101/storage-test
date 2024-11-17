@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import datetime
@@ -53,27 +54,88 @@ def add_entry():
         return redirect(url_for('index'))
     return render_template('add_entry.html')
 
+@app.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
+def edit_entry(entry_id):
+    entry = Entry.query.get_or_404(entry_id)
+    
+    if request.method == 'POST':
+        entry.date = datetime.datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        entry.sleep_hours = float(request.form['sleep_hours'])
+        entry.calories = int(request.form['calories'])
+        entry.hydration = float(request.form['hydration'])
+        entry.running_mileage = float(request.form['running_mileage'])
+        entry.notes = request.form['notes']
+        
+        db.session.commit()  # Save the changes
+        return redirect(url_for('view_data'))
+
+    return render_template('edit_entry.html', entry=entry)
+
+@app.route('/delete/<int:entry_id>', methods=['GET'])
+def delete_entry(entry_id):
+    entry = Entry.query.get_or_404(entry_id)
+    db.session.delete(entry)
+    db.session.commit()  # Commit deletion
+    return redirect(url_for('view_data'))
+
 
 @app.route('/data')
 def view_data():
     entries = Entry.query.order_by(Entry.date).all()
+
     return render_template('view_data.html', entries=entries)
 
 @app.route('/charts')
 def view_charts():
-    # Query all entries
     entries = Entry.query.order_by(Entry.date).all()
+        # Aggregate data
+    daily_data = aggregate_data(entries, "day")
+    weekly_data = aggregate_data(entries, "week")
+    monthly_data = aggregate_data(entries, "month")
+    yearly_data = aggregate_data(entries, "year")
 
-    # Extract data for Chart.js
     chart_data = {
-        "dates": [entry.date.strftime('%Y-%m-%d') for entry in entries],
-        "sleep_hours": [entry.sleep_hours for entry in entries],
-        "calories": [entry.calories for entry in entries],
-        "hydration": [entry.hydration for entry in entries],
-        "running_mileage": [entry.running_mileage for entry in entries],
+        "daily": daily_data,
+        "weekly": weekly_data,
+        "monthly": monthly_data,
+        "yearly": yearly_data,
     }
 
     return render_template('view_charts.html', chart_data=chart_data)
+
+    # Helper functions for aggregation
+def aggregate_data(entries, group_by):
+    from collections import defaultdict
+    aggregated = defaultdict(lambda: {"sleep_hours": 0, "calories": 0, "hydration": 0, "running_mileage": 0, "count": 0})
+
+    for entry in entries:
+        if group_by == "day":
+            key = entry.date.strftime('%Y-%m-%d')  # Convert to string
+        elif group_by == "week":
+            key = entry.date.strftime('%Y-W%U')  # Year and week number as string
+        elif group_by == "month":
+            key = entry.date.strftime('%Y-%m')  # Year and month as string
+        elif group_by == "year":
+            key = str(entry.date.year)  # Year as string
+        else:
+            raise ValueError("Invalid group_by value")
+
+        aggregated[key]["sleep_hours"] += entry.sleep_hours
+        aggregated[key]["calories"] += entry.calories
+        aggregated[key]["hydration"] += entry.hydration
+        aggregated[key]["running_mileage"] += entry.running_mileage
+        aggregated[key]["count"] += 1
+
+    # Calculate averages where necessary
+    for key, value in aggregated.items():
+        value["sleep_hours"] /= value["count"]
+        value["calories"] /= value["count"]
+        value["hydration"] /= value["count"]
+        value["running_mileage"] /= value["count"]
+
+    return dict(aggregated)
+
+
 
 
 if __name__ == "__main__":

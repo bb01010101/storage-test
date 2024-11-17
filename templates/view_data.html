@@ -11,6 +11,7 @@
             <th>Hydration</th>
             <th>Running Mileage</th>
             <th>Notes</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +23,11 @@
             <td>{{ entry.hydration }}</td>
             <td>{{ entry.running_mileage }}</td>
             <td>{{ entry.notes }}</td>
+            <td>
+                <a href="{{ url_for('edit_entry', entry_id=entry.id) }}">Edit</a> |
+                <a href="{{ url_for('delete_entry', entry_id=entry.id) }}" onclick="return 
+                   confirm('Are you sure you want to delete this entry?');">Delete</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
