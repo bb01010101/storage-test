@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Metrics Chart</h2>
+
+<!-- Chart.js Canvas -->
+<canvas id="sleep-chart" width="800" height="400"></canvas>
+<canvas id="calories-chart" width="800" height="400"></canvas>
+<canvas id="hydration-chart" width="800" height="400"></canvas>
+<canvas id="running-chart" width="800" height="400"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Data passed from Flask
+    const chartData = {{ chart_data|tojson }};
+    
+    // Sleep Hours Chart
+    const sleepCtx = document.getElementById('sleep-chart').getContext('2d');
+    new Chart(sleepCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.dates, // X-axis: dates
+            datasets: [{
+                label: 'Sleep Hours',
+                data: chartData.sleep_hours, // Y-axis: sleep hours
+                borderColor: 'blue',
+                backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+
+    // Calories Chart
+    const caloriesCtx = document.getElementById('calories-chart').getContext('2d');
+    new Chart(caloriesCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.dates, // X-axis: dates
+            datasets: [{
+                label: 'Calories',
+                data: chartData.calories, // Y-axis: calories
+                borderColor: 'red',
+                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+
+    // Hydration Chart
+    const hydrationCtx = document.getElementById('hydration-chart').getContext('2d');
+    new Chart(hydrationCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.dates, // X-axis: dates
+            datasets: [{
+                label: 'Hydration (Liters)',
+                data: chartData.hydration, // Y-axis: hydration
+                borderColor: 'green',
+                backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+
+    // Running Mileage Chart
+    const runningCtx = document.getElementById('running-chart').getContext('2d');
+    new Chart(runningCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.dates, // X-axis: dates
+            datasets: [{
+                label: 'Running Mileage',
+                data: chartData.running_mileage, // Y-axis: running mileage
+                borderColor: 'purple',
+                backgroundColor: 'rgba(128, 0, 128, 0.1)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+</script>
+{% endblock %}
